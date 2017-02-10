@@ -75,6 +75,12 @@ public class MyElectricMainFragment extends Fragment
 
     TextView txtPower;
     TextView txtUseToday;
+    TextView txtGeyserTemp;
+    TextView txtCollectorTemp;
+    TextView txtVoltage;
+    TextView txtFrequency;
+    TextView txtInsideTemp;
+    TextView txtOutsideTemp;
     Button chart1_3h;
     Button chart1_6h;
     Button chart1_D;
@@ -84,7 +90,15 @@ public class MyElectricMainFragment extends Fragment
     Handler mHandler = new Handler();
 
     int wattFeedId = 0;
+    int wattFeed2Id = 0;
     int kWhFeelId = 0;
+    int geyserFeedId = 0;
+    int geyserFlagsFeedId = 0;
+    int collectorFeelId = 0;
+    int insideFeedId = 0;
+    int outsideFeedId = 0;
+    int voltageFeedId = 0;
+    int frequencyFeedId = 0;
     long timezone = 0;
     double yesterdaysPowerUsage;
     double totalPowerUsage;
@@ -94,12 +108,24 @@ public class MyElectricMainFragment extends Fragment
 
     ArrayList<String> chart1_labels;
     ArrayList<Double> chart1_values;
+
+    ArrayList<String> chart1b_labels;
+    ArrayList<Double> chart1b_values;
     ArrayList<String> chart2_labels;
     ArrayList<Double> chart2_values;
     int[] chart2_colors;
 
     double powerNow = 0;
     double powerToday = 0;
+
+    double geyserNow = 0;
+    double geyserFlagsNow = 0;
+    double collectorNow = 0;
+
+    double insideNow = 0;
+    double outsideNow = 0;
+    double voltageNow = 0;
+    double frequencyNow = 0;
 
     boolean blnShowCost = false;
 
@@ -161,13 +187,12 @@ public class MyElectricMainFragment extends Fragment
             HTTPClient.getInstance(getActivity()).addToRequestQueue(jsArrayRequest);
         }
     };
-
     private Runnable mGetPowerRunner = new Runnable()
     {
         @Override
         public void run()
         {
-            String url = String.format(Locale.US, "%s/feed/fetch.json?apikey=%s&ids=%d,%d", emoncms_url, emoncms_apikey, wattFeedId, kWhFeelId);
+            String url = String.format(Locale.US, "%s/feed/fetch.json?apikey=%s&ids=%d,%d,%d,%d,%d,%d,%d,%d,%d", emoncms_url, emoncms_apikey, wattFeedId, kWhFeelId,geyserFeedId,collectorFeelId,insideFeedId,outsideFeedId,voltageFeedId,frequencyFeedId,geyserFlagsFeedId);
             Log.i("EMONCMS:URL", "mGetPowerRunner:"+url);
             JsonArrayRequest jsArrayRequest = new JsonArrayRequest
                     (url, new Response.Listener<JSONArray>()
@@ -177,19 +202,55 @@ public class MyElectricMainFragment extends Fragment
                         {
                             String watt_value = "";
                             String kwh_value = "";
+                            String geyser_value = "";
+                            String geyserFlags_value = "";
+                            String collector_value = "";
+                            String inside_value = "";
+                            String outside_value = "";
+                            String voltage_value = "";
+                            String frequency_value = "";
 
-                            if (response.length() == 2)
+                            if (response.length() == 9)
                             {
                                 try
                                 {
                                     watt_value = response.getString(0);
                                     kwh_value = response.getString(1);
+                                    geyser_value = response.getString(2);
+                                    collector_value = response.getString(3);
+                                    inside_value = response.getString(4);
+                                    outside_value = response.getString(5);
+                                    voltage_value = response.getString(6);
+                                    frequency_value = response.getString(7);
+                                    geyserFlags_value = response.getString(8);
+
 
                                     if (Utils.isNumeric(watt_value))
                                         powerNow = Float.parseFloat(watt_value);
 
                                     if (Utils.isNumeric(kwh_value))
                                         totalPowerUsage = Float.parseFloat(kwh_value) * powerScale;
+
+                                    if (Utils.isNumeric(geyser_value))
+                                        geyserNow = Float.parseFloat(geyser_value);
+
+                                    if (Utils.isNumeric(collector_value))
+                                        collectorNow = Float.parseFloat(collector_value);
+
+                                    if (Utils.isNumeric(inside_value))
+                                        insideNow = Float.parseFloat(inside_value);
+
+                                    if (Utils.isNumeric(outside_value))
+                                        outsideNow = Float.parseFloat(outside_value);
+
+                                    if (Utils.isNumeric(voltage_value))
+                                        voltageNow = Float.parseFloat(voltage_value);
+
+                                    if (Utils.isNumeric(frequency_value))
+                                        frequencyNow = Float.parseFloat(frequency_value);
+
+                                    if (Utils.isNumeric(geyserFlags_value))
+                                        geyserFlagsNow = Float.parseFloat(geyserFlags_value);
 
                                     updateTextFields();
 
@@ -215,8 +276,10 @@ public class MyElectricMainFragment extends Fragment
                                     nextDailyChartUpdate = Calendar.getInstance().getTimeInMillis() + dailyChartUpdateInterval;
                                     mHandler.post(mGetUsageByDayRunner);
                                 }
-                                else
+                                else {
                                     mHandler.post(mGetPowerHistoryRunner);
+                                    //mHandler.post(mGetPower2HistoryRunner);
+                                }
                             }
                         }
                     }, new Response.ErrorListener()
@@ -226,8 +289,8 @@ public class MyElectricMainFragment extends Fragment
                         public void onErrorResponse(VolleyError error)
                         {
                             snackbar.setText(R.string.connection_error)
-                                .setDuration(Snackbar.LENGTH_INDEFINITE)
-                                .show();
+                                    .setDuration(Snackbar.LENGTH_INDEFINITE)
+                                    .show();
                             mHandler.postDelayed(mGetPowerRunner, 5000);
                         }
                     });
@@ -236,6 +299,7 @@ public class MyElectricMainFragment extends Fragment
             HTTPClient.getInstance(getActivity()).addToRequestQueue(jsArrayRequest);
         }
     };
+
 
 
     private Runnable mGetUsageByDayRunner = new Runnable()
@@ -335,6 +399,7 @@ public class MyElectricMainFragment extends Fragment
                                 snackbar.dismiss();
 
                             mHandler.post(mGetPowerHistoryRunner);
+                            //mHandler.post(mGetPower2HistoryRunner);
                         }
                     }, new Response.ErrorListener()
                     {
@@ -353,7 +418,6 @@ public class MyElectricMainFragment extends Fragment
             HTTPClient.getInstance(getActivity()).addToRequestQueue(jsArrayRequest);
         }
     };
-
     private Runnable mGetPowerHistoryRunner = new Runnable()
     {
         @Override
@@ -365,6 +429,8 @@ public class MyElectricMainFragment extends Fragment
             {
                 chart1_labels.clear();
                 chart1_values.clear();
+                chart1b_labels.clear();
+                chart1b_values.clear();
             }
 
             if (chart1_values.size() > 0)
@@ -373,7 +439,7 @@ public class MyElectricMainFragment extends Fragment
                 lastEntry = 0;
 
             Calendar cal = Calendar.getInstance();
-            long endTime = cal.getTimeInMillis();
+            final long endTime = cal.getTimeInMillis();
             cal.add(Calendar.HOUR, powerGraphLength);
             long startTime = cal.getTimeInMillis();
 
@@ -382,7 +448,7 @@ public class MyElectricMainFragment extends Fragment
 
             if (lastEntry > startTime)
                 startTime = lastEntry;
-
+            final long startTime2 =startTime;
             String url = String.format(Locale.US, "%s/feed/data.json?apikey=%s&id=%d&start=%d&end=%d&interval=%d&skipmissing=1&limitinterval=1", emoncms_url, emoncms_apikey, wattFeedId, startTime, endTime, interval);
             Log.i("EMONCMS:URL", "mGetPowerHistoryRunner:"+url);
             JsonArrayRequest jsArrayRequest = new JsonArrayRequest(url, new Response.Listener<JSONArray>()
@@ -416,7 +482,56 @@ public class MyElectricMainFragment extends Fragment
                             e.printStackTrace();
                         }
                     }
+                    String url2 = String.format(Locale.US, "%s/feed/data.json?apikey=%s&id=%d&start=%d&end=%d&interval=%d&skipmissing=1&limitinterval=1", emoncms_url, emoncms_apikey, wattFeed2Id, startTime2, endTime, interval);
+                    Log.i("EMONCMS:URL", "mGetPowerHistoryRunner2:"+url2);
+                    JsonArrayRequest jsArray2Request = new JsonArrayRequest(url2, new Response.Listener<JSONArray>()
+                    {
+                        @Override
+                        public void onResponse(JSONArray response)
+                        {
+                            for (int i = 0; i < response.length(); i++)
+                            {
+                                JSONArray row;
+                                try
+                                {
+                                    row = response.getJSONArray(i);
+                                    long time = Long.parseLong(row.getString(0));
 
+                                    if (lastEntry == 0)
+                                    {
+                                        chart1b_labels.add(row.getString(0));
+                                        chart1b_values.add(row.getDouble(1));
+                                    }
+                                    else if (time >= (lastEntry+(interval*1000)))
+                                    {
+                                        chart1b_labels.remove(0);
+                                        chart1b_values.remove(0);
+                                        chart1b_labels.add(row.getString(0));
+                                        chart1b_values.add(row.getDouble(1));
+                                    }
+                                }
+                                catch (JSONException e)
+                                {
+                                    e.printStackTrace();
+                                }
+                            }
+
+
+                        }
+                    }, new Response.ErrorListener()
+                    {
+
+                        @Override
+                        public void onErrorResponse(VolleyError error)
+                        {
+                            snackbar.setText(R.string.connection_error)
+                                    .setDuration(Snackbar.LENGTH_INDEFINITE)
+                                    .show();
+                            mHandler.postDelayed(mGetPowerHistoryRunner, 5000);
+                        }
+                    });
+
+                    jsArray2Request.setTag(TAG);
                     if (resetPowerGraph)
                         resetPowerGraph = false;
 
@@ -448,6 +563,88 @@ public class MyElectricMainFragment extends Fragment
                 mHandler.postDelayed(mGetPowerRunner, 10000);
         }
     };
+    private Runnable mGetPower2HistoryRunner = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            final long lastEntry;
+
+            if (resetPowerGraph)
+            {
+                chart1b_labels.clear();
+                chart1b_values.clear();
+            }
+
+            if (chart1b_values.size() > 0)
+                lastEntry = Long.parseLong(chart1b_labels.get(chart1b_values.size()-1));
+            else
+                lastEntry = 0;
+
+            Calendar cal = Calendar.getInstance();
+            long endTime = cal.getTimeInMillis();
+            cal.add(Calendar.HOUR, powerGraphLength);
+            long startTime = cal.getTimeInMillis();
+
+            int npoints = 1500;
+            final int interval = Math.round(((endTime - startTime)/1000) / npoints);
+
+            if (lastEntry > startTime)
+                startTime = lastEntry;
+
+            String url = String.format(Locale.US, "%s/feed/data.json?apikey=%s&id=%d&start=%d&end=%d&interval=%d&skipmissing=1&limitinterval=1", emoncms_url, emoncms_apikey, wattFeed2Id, startTime, endTime, interval);
+            Log.i("EMONCMS:URL", "mGetPower2HistoryRunner:"+url);
+            JsonArrayRequest jsArrayRequest = new JsonArrayRequest(url, new Response.Listener<JSONArray>()
+            {
+                @Override
+                public void onResponse(JSONArray response)
+                {
+                    Log.i("EMONCMS:URL", "mGetPower2HistoryRunner: response length:"+response.length());
+                    for (int i = 0; i < response.length(); i++)
+                    {
+                        JSONArray row;
+                        try
+                        {
+                            row = response.getJSONArray(i);
+                            long time = Long.parseLong(row.getString(0));
+
+                            if (lastEntry == 0)
+                            {
+                                chart1b_labels.add(row.getString(0));
+                                chart1b_values.add(row.getDouble(1));
+                            }
+                            else if (time >= (lastEntry+(interval*1000)))
+                            {
+                                chart1b_labels.remove(0);
+                                chart1b_values.remove(0);
+                                chart1b_labels.add(row.getString(0));
+                                chart1b_values.add(row.getDouble(1));
+                            }
+                        }
+                        catch (JSONException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+
+
+                }
+            }, new Response.ErrorListener()
+            {
+
+                @Override
+                public void onErrorResponse(VolleyError error)
+                {
+                    snackbar.setText(R.string.connection_error)
+                            .setDuration(Snackbar.LENGTH_INDEFINITE);
+                    //mHandler.postDelayed(mGetPower2HistoryRunner, 5000);
+                }
+            });
+
+            jsArrayRequest.setTag(TAG);
+
+        }
+    };
 
     private void updateTextFields()
     {
@@ -458,9 +655,15 @@ public class MyElectricMainFragment extends Fragment
         }
         else
         {
-            txtPower.setText(String.format(Locale.US, "%.0fW", powerNow));
-            txtUseToday.setText(String.format(Locale.US, "%.1fkWh", powerToday));
+            txtPower.setText(String.format(Locale.US, "%.0f", powerNow));
+            txtUseToday.setText(String.format(Locale.US, "%.1f", powerToday));
         }
+        txtGeyserTemp.setText(String.format(Locale.US, "%.0f°C", geyserNow));
+        txtCollectorTemp.setText(String.format(Locale.US, "%.0f°C", collectorNow));
+        txtInsideTemp.setText(String.format(Locale.US, "%.0f°C", insideNow));
+        txtOutsideTemp.setText(String.format(Locale.US, "%.0f°C", outsideNow));
+        txtVoltage.setText(String.format(Locale.US, "%.1fV", voltageNow));
+        txtFrequency.setText(String.format(Locale.US, "%.1fHz", frequencyNow));
     }
 
     @Override
@@ -472,7 +675,14 @@ public class MyElectricMainFragment extends Fragment
         emoncms_url += sp.getString(getString(R.string.setting_url), "emoncms.org");
         emoncms_apikey = sp.getString(getString(R.string.setting_apikey), null);
         wattFeedId = Integer.valueOf(sp.getString("myelectric_power_feed", "-1"));
+        wattFeed2Id = Integer.valueOf(sp.getString("myelectric_power_feed2", "-1"));
         kWhFeelId = Integer.valueOf(sp.getString("myelectric_kwh_feed", "-1"));
+        geyserFeedId = Integer.valueOf(sp.getString("myelectric_geyser_feed", "-1"));
+        collectorFeelId = Integer.valueOf(sp.getString("myelectric_collector_feed", "-1"));
+        insideFeedId = Integer.valueOf(sp.getString("myelectric_tempinside_feed", "-1"));
+        outsideFeedId = Integer.valueOf(sp.getString("myelectric_tempoutside_feed", "-1"));
+        voltageFeedId = Integer.valueOf(sp.getString("myelectric_voltage_feed", "-1"));
+        frequencyFeedId = Integer.valueOf(sp.getString("myelectric_frequency_feed", "-1"));
 
         powerScale = Integer.valueOf(sp.getString("myelectric_escale", "0")) == 0 ? 1.0F : 0.001F;
         powerCost = Float.parseFloat(sp.getString("myelectric_unit_cost", "0"));
@@ -480,6 +690,8 @@ public class MyElectricMainFragment extends Fragment
 
         chart1_labels = new ArrayList<>();
         chart1_values = new ArrayList<>();
+        chart1b_labels = new ArrayList<>();
+        chart1b_values = new ArrayList<>();
         chart2_labels = new ArrayList<>();
         chart2_values = new ArrayList<>();
 
@@ -548,6 +760,12 @@ public class MyElectricMainFragment extends Fragment
 
         txtPower = (TextView) view.findViewById(R.id.txtPower);
         txtUseToday = (TextView) view.findViewById(R.id.txtUseToday);
+        txtCollectorTemp = (TextView) view.findViewById(R.id.txtCollectorTemp);
+        txtGeyserTemp = (TextView) view.findViewById(R.id.txtGeyserTemp);
+        txtInsideTemp = (TextView) view.findViewById(R.id.txtInsideTemp);
+        txtOutsideTemp = (TextView) view.findViewById(R.id.txtOutsideTemp);
+        txtVoltage = (TextView) view.findViewById(R.id.txtVoltage);
+        txtFrequency = (TextView) view.findViewById(R.id.txtFreq);
         chart1_3h = (Button) view.findViewById(R.id.btnChart1_3H);
         chart1_6h = (Button) view.findViewById(R.id.btnChart1_6H);
         chart1_D = (Button) view.findViewById(R.id.btnChart1_D);
@@ -568,15 +786,32 @@ public class MyElectricMainFragment extends Fragment
             blnShowCost = savedInstanceState.getBoolean("show_cost", false);
             powerGraphLength = savedInstanceState.getInt("power_graph_length", -6);
             powerNow = savedInstanceState.getDouble("power_now", 0);
-            powerToday = savedInstanceState.getDouble("power_today", 0);
+            powerToday = savedInstanceState.getDouble("power_today", 0);;
+            geyserNow = savedInstanceState.getDouble("geyser_now", 0);
+            geyserFlagsNow = savedInstanceState.getDouble("geyserFlags_now", 0);
+            collectorNow = savedInstanceState.getDouble("collector_now", 0);
+            insideNow = savedInstanceState.getDouble("inside_now", 0);
+            outsideNow = savedInstanceState.getDouble("outside_now", 0);
+            voltageNow = savedInstanceState.getDouble("voltage_now", 0);
+            frequencyNow = savedInstanceState.getDouble("frequency_now", 0);
             wattFeedId = savedInstanceState.getInt("watt_feed_id", -1);
+            wattFeed2Id = savedInstanceState.getInt("watt_feed2_id", -1);
             kWhFeelId = savedInstanceState.getInt("kwh_feed_id", -1);
+            geyserFeedId = savedInstanceState.getInt("geyser_feed_id", -1);
+            geyserFlagsFeedId = savedInstanceState.getInt("geyser_feed_id", -1);
+            collectorFeelId = savedInstanceState.getInt("collector_feed_id", -1);
+            insideFeedId = savedInstanceState.getInt("inside_feed_id", -1);
+            outsideFeedId = savedInstanceState.getInt("outside_feed_id", -1);
+            voltageFeedId = savedInstanceState.getInt("voltage_feed_id", -1);
+            frequencyFeedId = savedInstanceState.getInt("frequency_feed_id", -1);
             chart2_colors = savedInstanceState.getIntArray("chart2_colors");
 
             updateTextFields();
 
             chart1_labels = savedInstanceState.getStringArrayList("chart1_labels");
             double saved_chart1_values[] = savedInstanceState.getDoubleArray("chart1_values");
+            chart1b_labels = savedInstanceState.getStringArrayList("chart1b_labels");
+            double saved_chart1b_values[] = savedInstanceState.getDoubleArray("chart1b_values");
             chart2_labels = savedInstanceState.getStringArrayList("chart2_labels");
             double saved_chart2_values[] = savedInstanceState.getDoubleArray("chart2_values");
 
@@ -587,6 +822,12 @@ public class MyElectricMainFragment extends Fragment
                     chart1_values.add(saved_chart1_value);
             }
 
+            if (chart1b_labels != null && saved_chart1b_values != null
+                    && chart1b_labels.size() > 0 && saved_chart1b_values.length > 0
+                    && chart1b_labels.size() == saved_chart1b_values.length) {
+                for (double saved_chart1b_value : saved_chart1b_values)
+                    chart1b_values.add(saved_chart1b_value);
+            }
             if (chart2_labels != null && saved_chart2_values != null
                     && chart2_labels.size() > 0 && saved_chart2_values.length > 0
                     && chart2_labels.size() == saved_chart2_values.length) {
@@ -623,8 +864,23 @@ public class MyElectricMainFragment extends Fragment
         outState.putInt("power_graph_length", powerGraphLength);
         outState.putDouble("power_now", powerNow);
         outState.putDouble("power_today", powerToday);
+        outState.putDouble("geyser_now", geyserNow);
+        outState.putDouble("geyserFlags_now", geyserFlagsNow);
+        outState.putDouble("collector_now", collectorNow);
+        outState.putDouble("inside_now", insideNow);
+        outState.putDouble("outside_now", outsideNow);
+        outState.putDouble("voltage_now", voltageNow);
+        outState.putDouble("frequency_now", frequencyNow);
         outState.putInt("watt_feed_id", wattFeedId);
+        outState.putInt("watt_feed2_id", wattFeed2Id);
         outState.putInt("kwh_feed_id", kWhFeelId);
+        outState.putInt("geyser_feed_id", geyserFeedId);
+        outState.putInt("geyserFlags_feed_id", geyserFlagsFeedId);
+        outState.putInt("collector_feed_id", collectorFeelId);
+        outState.putInt("outside_feed_id", insideFeedId);
+        outState.putInt("inside_feed_id", outsideFeedId);
+        outState.putInt("voltage_feed_id", voltageFeedId);
+        outState.putInt("frequencyy_feed_id", frequencyFeedId);
         outState.putIntArray("chart2_colors", chart2_colors);
 
         double[] values = new double[chart1_values.size()];
@@ -634,6 +890,14 @@ public class MyElectricMainFragment extends Fragment
 
         outState.putStringArrayList("chart1_labels", chart1_labels);
         outState.putDoubleArray("chart1_values", values);
+
+        values = new double[chart1b_values.size()];
+
+        for (int i = 0; i < chart1b_labels.size(); i++)
+            values[i] = chart1b_values.get(i);
+
+        outState.putStringArrayList("chart1b_labels", chart1b_labels);
+        outState.putDoubleArray("chart1b_values", values);
 
         values = new double[chart2_values.size()];
 
@@ -684,7 +948,7 @@ public class MyElectricMainFragment extends Fragment
             snackbar.setText(R.string.server_not_configured).show();
         else if (wattFeedId == -1 || kWhFeelId == -1)
             mHandler.post(mGetFeedsRunner);
-        else if (wattFeedId >= 0 && kWhFeelId >= 0)
+        else if (wattFeedId >= 0 &&wattFeed2Id >= 0 && kWhFeelId >= 0)
         {
             snackbar.dismiss();
             mHandler.post(mGetPowerRunner);
@@ -708,6 +972,7 @@ public class MyElectricMainFragment extends Fragment
 
         LineData chart1_linedata = chart1.getData();
         LineDataSet chart1_dataset;
+        LineDataSet chart1b_dataset;
 
         if (chart1_linedata == null) {
             chart1.setDrawGridBackground(false);
@@ -725,6 +990,7 @@ public class MyElectricMainFragment extends Fragment
             yAxis.setDrawAxisLine(false);
             yAxis.setTextColor(ContextCompat.getColor(getActivity(), R.color.lightGrey));
             yAxis.setTextSize(getResources().getInteger(R.integer.chartDateTextSize));
+            yAxis.setAxisMinimum(0f); // start at zero
 
             XAxis xAxis = chart1.getXAxis();
             xAxis.setDrawAxisLine(false);
@@ -746,19 +1012,40 @@ public class MyElectricMainFragment extends Fragment
             chart1_dataset.setHighlightEnabled(false);
             chart1_linedata = new LineData();
             chart1_linedata.addDataSet(chart1_dataset);
+            //chart1.setData(chart1_linedata);
+
+            chart1b_dataset = new LineDataSet(null, "watts2");
+            chart1b_dataset.setColor(ContextCompat.getColor(getActivity(), R.color.chartRed));
+            chart1b_dataset.setValueTextColor(ContextCompat.getColor(getActivity(), R.color.lightGrey));
+            chart1b_dataset.setDrawCircles(false);
+            chart1b_dataset.setDrawFilled(true);
+            chart1b_dataset.setFillColor(ContextCompat.getColor(getActivity(), R.color.chartRed));
+            chart1b_dataset.setDrawValues(false);
+            chart1b_dataset.setValueTextSize(R.integer.chartValueTextSize);
+            chart1b_dataset.setHighlightEnabled(false);
+            chart1_linedata.addDataSet(chart1b_dataset);
+
             chart1.setData(chart1_linedata);
+
 
             RelativeLayout buttonPanel = (RelativeLayout) getActivity().findViewById(R.id.buttonPanel);
             if (buttonPanel != null)
                 buttonPanel.setVisibility(View.VISIBLE);
         }
-        else
+        else {
             chart1_dataset = (LineDataSet) chart1_linedata.getDataSetByLabel("watts", true);
-
+            chart1b_dataset = (LineDataSet) chart1_linedata.getDataSetByLabel("watts2", true);
+        }
         chart1_dataset.clear();
+        chart1b_dataset.clear();
 
-        for (int i = 0; i < chart1_values.size(); i++)
-            chart1_linedata.addEntry(new Entry(i, chart1_values.get(i).floatValue()), 0);
+        for (int i = 0; i < chart1_values.size(); i++) {
+            chart1_dataset.addEntry(new Entry(i, chart1_values.get(i).floatValue()));
+        }
+
+        for (int i = 0; i < chart1b_values.size(); i++) {
+            chart1b_dataset.addEntry(new Entry(i, chart1b_values.get(i).floatValue()));
+        }
 
         chart1.fitScreen();
 
@@ -861,6 +1148,7 @@ public class MyElectricMainFragment extends Fragment
             HTTPClient.getInstance(getActivity()).cancellAll(TAG);
             mHandler.removeCallbacksAndMessages(null);
             mHandler.post(mGetPowerHistoryRunner);
+           // mHandler.post(mGetPower2HistoryRunner);
         }
     };
 

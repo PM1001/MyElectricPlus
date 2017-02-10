@@ -31,8 +31,10 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="cost_label">kWh / Cost</string>
-    <string name="power_now_label">POWER NOW</string>
-    <string name="use_today_label">USE TODAY</string>
+    <string name="power_now_label">NOW</string>
+    <string name="use_today_label">TODAY</string>
+    <string name="inside_label">Inside</string>
+    <string name="outside_label">Outside</string>
     <string name="solar_pv_label">SOLAR PV</string>
 
     <string name="open">Open</string>
@@ -48,8 +50,10 @@
     <string name="invalid_kwh_feedid">Invalid use_kwh feed ID, please select a kwh feed from the configuration menu</string>
     <string name="invalid_watt_feedid">Invalid use feed ID, please select a watt feed from the configuration menu</string>
 
-    <string name="txt_power_default">0W</string>
-    <string name="use_today_default">0.0kWh</string>
+    <string name="txt_power_default">0</string>
+    <string name="use_today_default">0.0</string>
+    <string name="txt_geysertemp_default">0°C</string>
+    <string name="txt_collectortemp_default">0°C</string>
 
     <string name="button_3h_label">3H</string>
     <string name="button_6h_label">6H</string>
@@ -110,7 +114,15 @@
     <string name="settings_title_myelectric_feeds">Feeds</string>
     <string name="settings_title_myelectric_currency">Currency</string>
     <string name="settings_title_myelectric_power_feed">Power feed (Watts)</string>
+    <string name="settings_title_myelectric_power_feed2">Power feed 2(Watts)</string>
     <string name="settings_title_myelectric_kwh_feed">"Bar graph feed (kWh)</string>
+    <string name="settings_title_myelectric_geyser_feed">Geyser Temperature feed</string>
+    <string name="settings_title_myelectric_collector_feed">Collector Temperature feed</string>
+    <string name="settings_title_myelectric_geyserflags_feed">Geyser flags feed</string>
+    <string name="settings_title_myelectric_inside_feed">Inside Temperature feed</string>
+    <string name="settings_title_myelectric_outside_feed">Outside  Temperature feed</string>
+    <string name="settings_title_myelectric_voltage_feed">Voltage feed</string>
+    <string name="settings_title_myelectric_frequency_feed">Frequency feed</string>
     <string name="settings_title_myelectric_escale">Wh or kWh Feed</string>
     <string name="settings_title_myelectric_unit_cost">Cost</string>
     <string name="settings_title_myelectric_cost_symbol">Cost Unit</string>
